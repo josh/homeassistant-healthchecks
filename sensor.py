@@ -1,4 +1,4 @@
-"""Platform for sensor integration."""
+"""Platform for Healthchecks.io integration."""
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
@@ -10,6 +10,8 @@ from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+
+DOMAIN = "healthchecks"
 
 
 def setup_platform(

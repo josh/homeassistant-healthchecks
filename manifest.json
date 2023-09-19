@@ -1,10 +1,11 @@
 {
-  "domain": "example_sensor",
-  "name": "Example Sensor",
-  "codeowners": [],
+  "domain": "healthchecks",
+  "name": "Healthchecks.io",
+  "codeowners": ["@josh"],
   "dependencies": [],
   "documentation": "https://github.com/josh/homeassistant-healthchecks",
-  "iot_class": "local_polling",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
   "requirements": [],
   "version": "0.1.0"
 }

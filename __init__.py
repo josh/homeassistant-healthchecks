@@ -1,1 +1,1 @@
-"""The example sensor integration."""
+"""Healthchecks.io integration."""
