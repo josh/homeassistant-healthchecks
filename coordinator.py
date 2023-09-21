@@ -1,7 +1,7 @@
 """DataUpdateCoordinator for the Healthchecks.io integration."""
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 import aiohttp
 import async_timeout
@@ -33,8 +33,27 @@ class HealthchecksCheck(TypedDict):
     failure_kw: str
     filter_subject: bool
     filter_body: bool
-    unique_key: str
-    timeout: int
+    unique_key: NotRequired[str]
+    last_duration: NotRequired[int]
+    ping_url: NotRequired[str]
+    update_url: NotRequired[str]
+    pause_url: NotRequired[str]
+    resume_url: NotRequired[str]
+    channels: NotRequired[str]
+    timeout: NotRequired[int]
+
+
+def check_id(check: HealthchecksCheck) -> str:
+    if "ping_url" in check:
+        return check_uuid(check)
+    elif "unique_key" in check:
+        return check["unique_key"]
+    else:
+        return check["slug"]
+
+
+def check_uuid(check: HealthchecksCheck) -> str:
+    return check["ping_url"].split("/")[-1]
 
 
 class HealthchecksDataUpdateCoordinator(
@@ -82,6 +101,6 @@ class HealthchecksDataUpdateCoordinator(
 
             checks: dict[str, HealthchecksCheck] = {}
             for check in data["checks"]:
-                checks[check["unique_key"]] = check
+                checks[check_id(check)] = check
 
             return checks

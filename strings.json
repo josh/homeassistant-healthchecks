@@ -17,6 +17,12 @@
       "status": {
         "name": "Status"
       },
+      "timeout": {
+        "name": "Timeout"
+      },
+      "grace": {
+        "name": "Grace"
+      },
       "n_pings": {
         "name": "Ping count"
       },

@@ -9,7 +9,12 @@ from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import HealthchecksCheck, HealthchecksDataUpdateCoordinator
+from .coordinator import (
+    HealthchecksCheck,
+    HealthchecksDataUpdateCoordinator,
+    check_id,
+    check_uuid,
+)
 
 PLATFORMS = [
     # Platform.BINARY_SENSOR,
@@ -53,19 +58,23 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         """Initialize a Healthchecks.io sensor."""
         super().__init__(coordinator=coordinator)
         self.entity_description = description
-        self.unique_key = check["unique_key"]  # or uuid
-        slug = check["slug"].replace("-", "_")
-        self._attr_unique_id = f"{slug}_{description.key}"
+        self._id = check_id(check)
+        self._attr_unique_id = f"{self._id}_{description.key}"
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
-        check = self.coordinator.data[self.unique_key]
+        check = self.coordinator.data[self._id]
+
+        configuration_url: str | None = None
+        if "ping_url" in check:
+            uuid = check_uuid(check)
+            configuration_url = f"https://healthchecks.io/checks/{uuid}/details/"
 
         return DeviceInfo(
-            configuration_url=f"https://healthchecks.io/checks/{check['unique_key']}/details/",
+            configuration_url=configuration_url,
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, check["unique_key"])},
+            identifiers={(DOMAIN, self._id)},
             manufacturer="Healthchecks.io",
             name=check["name"],
         )

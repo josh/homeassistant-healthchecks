@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -61,7 +61,7 @@ class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
     @property
     def native_value(self) -> datetime | str | None:
         """Return the state of the sensor."""
-        return self.entity_description.value_fn(self.coordinator.data[self.unique_key])
+        return self.entity_description.value_fn(self.coordinator.data[self._id])
 
 
 SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
@@ -72,6 +72,20 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         options=["new", "up", "grace", "down", "paused"],
         value_fn=lambda check: check["status"],
+    ),
+    HealthchecksSensorEntityDescription(
+        key="timeout",
+        translation_key="timeout",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        value_fn=lambda check: check.get("timeout", 0),
+    ),
+    HealthchecksSensorEntityDescription(
+        key="grace",
+        translation_key="grace",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        value_fn=lambda check: check["grace"],
     ),
     HealthchecksSensorEntityDescription(
         key="n_pings",
