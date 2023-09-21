@@ -2,6 +2,7 @@
   "domain": "healthchecks",
   "name": "Healthchecks.io",
   "codeowners": ["@josh"],
+  "config_flow": true,
   "documentation": "https://github.com/josh/homeassistant-healthchecks",
   "integration_type": "hub",
   "iot_class": "cloud_polling",

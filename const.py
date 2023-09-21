@@ -1,13 +1,15 @@
 """Constants for the Healthchecks.io integration."""
+from __future__ import annotations
+
 import logging
 from datetime import timedelta
 from typing import Final
 
-from homeassistant.const import Platform
-
 DOMAIN: Final = "healthchecks"
-PLATFORMS = [Platform.SENSOR]
 
 LOGGER = logging.getLogger(__package__)
+SCAN_INTERVAL = timedelta(minutes=1)
 
-COORDINATOR_UPDATE_INTERVAL = timedelta(minutes=5)
+CONF_NAME: Final = "name"
+CONF_TAG: Final = "tag"
+CONF_SLUG: Final = "slug"

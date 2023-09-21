@@ -1,18 +1,21 @@
 """DataUpdateCoordinator for the Healthchecks.io integration."""
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import TypedDict
 
 import aiohttp
 import async_timeout
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_API_KEY
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, LOGGER
+from .const import CONF_SLUG, CONF_TAG, DOMAIN, LOGGER, SCAN_INTERVAL
 
 
-class Check(TypedDict):
+class HealthchecksCheck(TypedDict):
     name: str
     slug: str
     tags: str
@@ -34,48 +37,51 @@ class Check(TypedDict):
     timeout: int
 
 
-class ChecksDataUpdateCoordinator(DataUpdateCoordinator[list[Check]]):
-    """Data update coordinator for Healthchecks.io."""
+class HealthchecksDataUpdateCoordinator(
+    DataUpdateCoordinator[dict[str, HealthchecksCheck]]
+):
+    """The Healthchecks.io Data Update Coordinator."""
 
-    _session: aiohttp.ClientSession
-    _api_key: str
-    _slug: str | None
-    _tag: str | list[str] | None
+    session: aiohttp.ClientSession
+    config_entry: ConfigEntry
 
-    def __init__(
-        self,
-        hass,
-        api_key: str,
-        slug: str | None = None,
-        tag: str | list[str] | None = None,
-    ):
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
         super().__init__(
             hass,
             logger=LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=300),
+            update_interval=SCAN_INTERVAL,
         )
-        self._session = async_get_clientsession(hass)
-        self._api_key = api_key
-        self._slug = slug
-        self._tag = tag
+        self.config_entry = entry
+        self.session = async_get_clientsession(hass)
 
-    async def _async_update_data(self) -> list[Check]:
+    async def _async_update_data(self) -> dict[str, HealthchecksCheck]:
         async with async_timeout.timeout(10):
+            headers = {}
             params = {}
-            if self._slug:
-                params["slug"] = self._slug
-            if self._tag:
-                params["tag"] = self._tag
-            response = await self._session.request(
+
+            if api_key := self.config_entry.data.get(CONF_API_KEY):
+                headers["X-Api-Key"] = api_key
+            if slug := self.config_entry.data.get(CONF_SLUG):
+                params["slug"] = slug
+            if tag := self.config_entry.data.get(CONF_TAG):
+                params["tag"] = tag
+
+            response = await self.session.request(
                 method="GET",
                 url="https://healthchecks.io/api/v3/checks/",
                 params=params,
-                headers={"X-Api-Key": self._api_key},
+                headers=headers,
             )
-            # TODO: Handle 401 Unauthorized
-            # homeassistant.exceptions.ConfigEntryAuthFailed
+
+            if response.status == 401:
+                raise ConfigEntryAuthFailed()
+
             response.raise_for_status()
             data = await response.json()
-            assert isinstance(data, dict)
-            return data["checks"]
+
+            checks: dict[str, HealthchecksCheck] = {}
+            for check in data["checks"]:
+                checks[check["unique_key"]] = check
+
+            return checks

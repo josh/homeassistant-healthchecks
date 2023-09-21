@@ -1,106 +1,97 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
-import voluptuous as vol
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+
 from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA,
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .coordinator import Check, ChecksDataUpdateCoordinator
-
-CONF_SLUG = "slug"
-CONF_TAG = "tag"
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_API_KEY): cv.string,
-        vol.Optional("slug"): cv.string,
-        vol.Optional("tag"): vol.Any(cv.string, vol.All(cv.ensure_list, [cv.string])),
-    }
-)
-
-
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up an integration platform async."""
-
-    # if discovery_info is None:
-    #     return
-
-    api_key = config[CONF_API_KEY]
-    tag = config.get("tag", None)
-    slug = config.get("slug", None)
-
-    coordinator = ChecksDataUpdateCoordinator(hass, api_key=api_key, slug=slug, tag=tag)
-    await coordinator.async_config_entry_first_refresh()
-
-    sensors = []
-    for check in coordinator.data:
-        sensors.append(CheckStatusSensor(coordinator, check))
-
-    async_add_entities(sensors, update_before_add=True)
+from . import HealthchecksEntity
+from .const import DOMAIN
+from .coordinator import HealthchecksCheck
 
 
 async def async_setup_entry(
-    self,
     hass: HomeAssistant,
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up an integration platform from a config entry."""
-    pass
-
-
-class CheckStatusSensor(CoordinatorEntity[ChecksDataUpdateCoordinator], SensorEntity):
-    _attr_attribution = "Data provided by Healthchecks.io"
-    _attr_has_entity_name = True
-
-    _attr_icon = "mdi:server"
-    _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["new", "up", "grace", "down", "paused"]
-    _attr_device_info = DeviceInfo(
-        identifiers={"healthchecks"},
-        name="Healtchecks",
+    """Set up a Healthchecks.io sensors based on a config entry."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities(
+        HealthchecksSensorEntity(
+            coordinator=coordinator,
+            check=check,
+            description=description,
+        )
+        for check in coordinator.data.values()
+        for description in SENSORS
     )
 
-    def __init__(self, coordinator: ChecksDataUpdateCoordinator, check: Check) -> None:
-        super().__init__(coordinator)
-        self._unique_key = check["unique_key"]
-        self._attr_unique_id = self._unique_key
-        self._update_check(check)
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        for check in self.coordinator.data:
-            if check["unique_key"] == self._unique_key:
-                self._update_check(check)
-        self.async_write_ha_state()
+@dataclass
+class HealthchecksSensorEntityDescriptionMixin:
+    """Mixin for required keys."""
 
-    def _update_check(self, check: Check) -> None:
-        self._attr_name = check["name"]
-        self._attr_native_value = check["status"]
-        self._attr_extra_state_attributes = {
-            "name": check["name"],
-            "slug": check["slug"],
-            "tags": check["tags"],
-            "desc": check["desc"],
-            "grace": check["grace"],
-            "n_pings": check["n_pings"],
-            "last_ping": check["last_ping"],
-            "next_ping": check["next_ping"],
-            "unique_key": check["unique_key"],
-        }
+    value_fn: Callable[[HealthchecksCheck], datetime | str | None]
+
+
+@dataclass
+class HealthchecksSensorEntityDescription(
+    SensorEntityDescription, HealthchecksSensorEntityDescriptionMixin
+):
+    """Describes a Healthchecks.io sensor entity."""
+
+
+class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
+    """Defines a Tailscale sensor."""
+
+    entity_description: HealthchecksSensorEntityDescription
+
+    @property
+    def native_value(self) -> datetime | str | None:
+        """Return the state of the sensor."""
+        return self.entity_description.value_fn(self.coordinator.data[self.unique_key])
+
+
+SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
+    HealthchecksSensorEntityDescription(
+        key="status",
+        translation_key="status",
+        icon="mdi:server",
+        device_class=SensorDeviceClass.ENUM,
+        options=["new", "up", "grace", "down", "paused"],
+        value_fn=lambda check: check["status"],
+    ),
+    HealthchecksSensorEntityDescription(
+        key="n_pings",
+        translation_key="n_pings",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda check: check["n_pings"],
+    ),
+    HealthchecksSensorEntityDescription(
+        key="last_ping",
+        translation_key="last_ping",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda check: datetime.fromisoformat(check["last_ping"]),
+    ),
+    HealthchecksSensorEntityDescription(
+        key="next_ping",
+        translation_key="next_ping",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda check: datetime.fromisoformat(check["next_ping"]),
+    ),
+)

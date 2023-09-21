@@ -4,94 +4,60 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigFlow
+from homeassistant.const import CONF_API_KEY
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, LOGGER
+from .const import CONF_NAME, CONF_SLUG, CONF_TAG, DOMAIN
 
-# TODO adjust the data schema to the data that you need
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("api_token"): str,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Optional(CONF_SLUG): cv.string,
+        vol.Optional(CONF_TAG): cv.string,
     }
 )
 
 
-class PlaceholderHub:
-    """Placeholder class to make tests pass.
-
-    TODO Remove this placeholder class and replace with things from your PyPI package.
-    """
-
-    def __init__(self, host: str) -> None:
-        """Initialize."""
-        self.host = host
-
-    async def authenticate(self, api_token: str) -> bool:
-        """Test if we can authenticate with the host."""
-        return True
-
-
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-    # TODO validate the data can be used to set up a connection.
-
-    # If your PyPI package is not built with async, pass your methods
-    # to the executor:
-    # await hass.async_add_executor_job(
-    #     your_validate_func, data["username"], data["password"]
-    # )
-
-    hub = PlaceholderHub(data["host"])
-
-    if not await hub.authenticate(data["api_token"]):
-        raise InvalidAuth
-
-    # If you cannot connect:
-    # throw CannotConnect
-    # If the authentication is wrong:
-    # InvalidAuth
-
-    # Return info that you want to store in the config entry.
-    return {"title": "Name of the device"}
-
-
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Healthchecks.io."""
+class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
+    """Config flow for Healthchecks.io."""
 
     VERSION = 1
 
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+        self,
+        user_input: dict[str, Any] | None = None,
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle a flow initialized by the user."""
         errors: dict[str, str] = {}
+
         if user_input is not None:
-            try:
-                info = await validate_input(self.hass, user_input)
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except InvalidAuth:
+            session = async_get_clientsession(self.hass)
+            response = await session.request(
+                method="GET",
+                url="https://healthchecks.io/api/v3/checks/",
+                headers={"X-Api-Key": user_input[CONF_API_KEY]},
+            )
+            if response.status == 200:
+                await self.async_set_unique_id(user_input[CONF_NAME])
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(
+                    title=user_input[CONF_NAME],
+                    data=user_input,
+                )
+            elif response.status == 401:
                 errors["base"] = "invalid_auth"
-            except Exception:  # pylint: disable=broad-except
-                LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
             else:
-                return self.async_create_entry(title=info["title"], data=user_input)
+                errors["base"] = "unknown"
 
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="user",
+            description_placeholders={
+                "authkeys_url": "https://healthchecks.io/accounts/profile/"
+            },
+            data_schema=STEP_USER_DATA_SCHEMA,
+            errors=errors,
         )
-
-
-class CannotConnect(HomeAssistantError):
-    """Error to indicate we cannot connect."""
-
-
-class InvalidAuth(HomeAssistantError):
-    """Error to indicate there is invalid auth."""

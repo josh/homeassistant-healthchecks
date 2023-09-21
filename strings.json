@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Healthchecks.io",
+        "data": {
+          "name": "Project Name",
+          "api_key": "[%key:common::config_flow::data::api_key%]",
+          "slug": "Slug",
+          "tag": "Tag"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "status": {
+        "name": "Status"
+      },
+      "n_pings": {
+        "name": "Ping count"
+      },
+      "last_ping": {
+        "name": "Last ping"
+      },
+      "next_ping": {
+        "name": "Next ping"
+      }
+    }
+  }
+}
