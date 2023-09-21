@@ -1,53 +1,106 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import TEMP_CELSIUS
-from homeassistant.core import HomeAssistant
+import voluptuous as vol
+from homeassistant.components.sensor import (
+    PLATFORM_SCHEMA,
+    SensorDeviceClass,
+    SensorEntity,
+)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_API_KEY
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .coordinator import Check, ChecksDataUpdateCoordinator
+
+CONF_SLUG = "slug"
+CONF_TAG = "tag"
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_API_KEY): cv.string,
+        vol.Optional("slug"): cv.string,
+        vol.Optional("tag"): vol.Any(cv.string, vol.All(cv.ensure_list, [cv.string])),
+    }
+)
 
 
-def setup_platform(
+async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
-    add_entities: AddEntitiesCallback,
+    async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up the sensor platform."""
-    # We only want this platform to be set up via discovery.
-    if discovery_info is None:
-        return
-    add_entities([ExampleSensor()])
+    """Set up an integration platform async."""
+
+    # if discovery_info is None:
+    #     return
+
+    api_key = config[CONF_API_KEY]
+    tag = config.get("tag", None)
+    slug = config.get("slug", None)
+
+    coordinator = ChecksDataUpdateCoordinator(hass, api_key=api_key, slug=slug, tag=tag)
+    await coordinator.async_config_entry_first_refresh()
+
+    sensors = []
+    for check in coordinator.data:
+        sensors.append(CheckStatusSensor(coordinator, check))
+
+    async_add_entities(sensors, update_before_add=True)
 
 
-class ExampleSensor(SensorEntity):
-    """Representation of a sensor."""
+async def async_setup_entry(
+    self,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up an integration platform from a config entry."""
+    pass
 
-    def __init__(self) -> None:
-        """Initialize the sensor."""
-        self._state = None
 
-    @property
-    def name(self) -> str:
-        """Return the name of the sensor."""
-        return "Example Temperature"
+class CheckStatusSensor(CoordinatorEntity[ChecksDataUpdateCoordinator], SensorEntity):
+    _attr_attribution = "Data provided by Healthchecks.io"
+    _attr_has_entity_name = True
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
+    _attr_icon = "mdi:server"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ["new", "up", "grace", "down", "paused"]
+    _attr_device_info = DeviceInfo(
+        identifiers={"healthchecks"},
+        name="Healtchecks",
+    )
 
-    @property
-    def unit_of_measurement(self) -> str:
-        """Return the unit of measurement."""
-        return TEMP_CELSIUS
+    def __init__(self, coordinator: ChecksDataUpdateCoordinator, check: Check) -> None:
+        super().__init__(coordinator)
+        self._unique_key = check["unique_key"]
+        self._attr_unique_id = self._unique_key
+        self._update_check(check)
 
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        for check in self.coordinator.data:
+            if check["unique_key"] == self._unique_key:
+                self._update_check(check)
+        self.async_write_ha_state()
 
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        self._state = self.hass.data[DOMAIN]["temperature"]
+    def _update_check(self, check: Check) -> None:
+        self._attr_name = check["name"]
+        self._attr_native_value = check["status"]
+        self._attr_extra_state_attributes = {
+            "name": check["name"],
+            "slug": check["slug"],
+            "tags": check["tags"],
+            "desc": check["desc"],
+            "grace": check["grace"],
+            "n_pings": check["n_pings"],
+            "last_ping": check["last_ping"],
+            "next_ping": check["next_ping"],
+            "unique_key": check["unique_key"],
+        }
