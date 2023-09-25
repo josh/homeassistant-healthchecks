@@ -42,8 +42,6 @@ class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
                 headers={"X-Api-Key": user_input[CONF_API_KEY]},
             )
             if response.status == 200:
-                await self.async_set_unique_id(user_input[CONF_NAME])
-                self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
                     data=user_input,
@@ -55,9 +53,6 @@ class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            description_placeholders={
-                "authkeys_url": "https://healthchecks.io/accounts/profile/"
-            },
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
         )

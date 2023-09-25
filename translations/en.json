@@ -1,15 +1,20 @@
 {
   "config": {
     "step": {
-      "user": {
-        "description": "Healthchecks.io",
+      "user": { 
+        "title": "Healthchecks.io",
         "data": {
           "name": "Project Name",
-          "api_key": "[%key:common::config_flow::data::api_key%]",
+          "api_key": "API Key",
           "slug": "Slug",
           "tag": "Tag"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Can't connect",
+      "invalid_auth": "Invalid API Key",
+      "unknown": "Unknown error"
     }
   },
   "entity": {
