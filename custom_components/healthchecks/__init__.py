@@ -8,13 +8,9 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .api import Check, check_id, check_uuid
 from .const import DOMAIN
-from .coordinator import (
-    HealthchecksCheck,
-    HealthchecksDataUpdateCoordinator,
-    check_id,
-    check_uuid,
-)
+from .coordinator import HealthchecksDataUpdateCoordinator
 
 PLATFORMS = [
     # Platform.BINARY_SENSOR,
@@ -52,7 +48,7 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         self,
         *,
         coordinator: HealthchecksDataUpdateCoordinator,
-        check: HealthchecksCheck,
+        check: Check,
         description: EntityDescription,
     ) -> None:
         """Initialize a Healthchecks.io sensor."""

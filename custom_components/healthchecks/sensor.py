@@ -17,8 +17,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HealthchecksEntity
+from .api import STATUSES, Check
 from .const import DOMAIN
-from .coordinator import HealthchecksCheck
 
 
 async def async_setup_entry(
@@ -43,7 +43,7 @@ async def async_setup_entry(
 class HealthchecksSensorEntityDescriptionMixin:
     """Mixin for required keys."""
 
-    value_fn: Callable[[HealthchecksCheck], datetime | str | None]
+    value_fn: Callable[[Check], datetime | str | None]
 
 
 @dataclass
@@ -70,7 +70,7 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         translation_key="status",
         icon="mdi:server",
         device_class=SensorDeviceClass.ENUM,
-        options=["new", "up", "grace", "down", "paused"],
+        options=STATUSES,
         value_fn=lambda check: check["status"],
     ),
     HealthchecksSensorEntityDescription(
