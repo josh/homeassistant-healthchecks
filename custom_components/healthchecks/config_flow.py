@@ -1,7 +1,7 @@
 """Config flow for Healthchecks.io integration."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
@@ -24,6 +24,13 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
+class ConfigEntityData(TypedDict):
+    api_url: str
+    api_key: str
+    slug: NotRequired[str | None]
+    tag: NotRequired[str | None]
+
+
 class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow for Healthchecks.io."""
 
@@ -38,16 +45,25 @@ class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             try:
+                data: ConfigEntityData = {
+                    "api_url": user_input.get(CONF_API_URL, API_URL),
+                    "api_key": user_input[CONF_API_KEY],
+                }
+
+                if slug := user_input.get(CONF_SLUG):
+                    data["slug"] = slug
+
+                if tag := user_input.get(CONF_TAG):
+                    data["tag"] = tag
+
                 session = async_get_clientsession(self.hass)
                 await check_api_key(
                     session=session,
-                    api_url=user_input.get(CONF_API_URL, API_URL),
-                    api_key=user_input[CONF_API_KEY],
+                    api_url=data["api_url"],
+                    api_key=data["api_key"],
                 )
-                return self.async_create_entry(
-                    title=user_input[CONF_NAME],
-                    data=user_input,
-                )
+
+                return self.async_create_entry(title=user_input[CONF_NAME], data=data)
             except UnauthorizedError:
                 errors["base"] = "invalid_auth"
             except Exception:

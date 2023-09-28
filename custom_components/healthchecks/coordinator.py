@@ -3,14 +3,14 @@ from __future__ import annotations
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .api import API_URL, Check, UnauthorizedError, check_id, list_checks
-from .const import CONF_API_URL, CONF_SLUG, CONF_TAG, DOMAIN, LOGGER, SCAN_INTERVAL
+from .api import Check, UnauthorizedError, check_id, list_checks
+from .config_flow import ConfigEntityData
+from .const import DOMAIN, LOGGER, SCAN_INTERVAL
 
 
 class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]]):
@@ -31,12 +31,13 @@ class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]])
 
     async def _async_update_data(self) -> dict[str, Check]:
         try:
+            data: ConfigEntityData = self.config_entry.data
             checks = await list_checks(
                 session=self.session,
-                api_url=self.config_entry.data.get(CONF_API_URL, API_URL),
-                api_key=self.config_entry.data[CONF_API_KEY],
-                slug=self.config_entry.data.get(CONF_SLUG),
-                tag=self.config_entry.data.get(CONF_TAG),
+                api_url=data["api_url"],
+                api_key=data["api_key"],
+                slug=data.get("slug"),
+                tag=data.get("tag"),
             )
             return {check_id(c): c for c in checks}
         except UnauthorizedError:
