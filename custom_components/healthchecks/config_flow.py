@@ -15,7 +15,7 @@ from .const import CONF_API_URL, CONF_NAME, CONF_SLUG, CONF_TAG, DOMAIN
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_NAME, default="Healthchecks.io"): cv.string,
         vol.Required(CONF_API_KEY): cv.string,
         vol.Optional(CONF_API_URL, default=API_URL): cv.string,
         vol.Optional(CONF_SLUG): cv.string,
