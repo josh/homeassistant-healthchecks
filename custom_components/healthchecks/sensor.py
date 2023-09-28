@@ -100,13 +100,19 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         translation_key="last_ping",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda check: datetime.fromisoformat(check["last_ping"]),
+        value_fn=lambda check: _parse_timestamp(check["last_ping"]),
     ),
     HealthchecksSensorEntityDescription(
         key="next_ping",
         translation_key="next_ping",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda check: datetime.fromisoformat(check["next_ping"]),
+        value_fn=lambda check: _parse_timestamp(check["next_ping"]),
     ),
 )
+
+
+def _parse_timestamp(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    return datetime.fromisoformat(value)
