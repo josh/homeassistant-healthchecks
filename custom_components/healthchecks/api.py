@@ -157,7 +157,11 @@ def check_uuid(check: BaseReadWriteCheck) -> str:
 
 def check_details_url(check: BaseReadWriteCheck) -> str:
     uri_components = urlparse(check["update_url"])
+    scheme = uri_components.scheme
+    netloc = uri_components.netloc
+
     uuid = uri_components.path.split("/")[-1]
     assert len(uuid) == 36
-    uri_components.path = f"/checks/{uuid}/details/"
-    return urlunsplit(uri_components)
+    path = f"/checks/{uuid}/details/"
+
+    return urlunsplit((scheme, netloc, path, "", ""))

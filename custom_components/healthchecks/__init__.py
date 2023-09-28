@@ -9,6 +9,7 @@ from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import Check, check_details_url, check_id
+from .config_flow import ConfigEntityData
 from .const import DOMAIN
 from .coordinator import HealthchecksDataUpdateCoordinator
 
@@ -62,6 +63,9 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         """Return the device info."""
         check = self.coordinator.data[self._id]
 
+        entity_config_data: ConfigEntityData = self.coordinator.config_entry.data
+        api_url = entity_config_data["api_url"]
+
         configuration_url: str | None = None
         if "update_url" in check:
             configuration_url = check_details_url(check)
@@ -69,7 +73,7 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         return DeviceInfo(
             configuration_url=configuration_url,
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, self._id)},
+            identifiers={(DOMAIN, api_url, self._id)},
             manufacturer="Healthchecks.io",
             name=check["name"],
         )
