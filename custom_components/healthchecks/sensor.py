@@ -91,6 +91,7 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         key="n_pings",
         translation_key="n_pings",
         entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement="pings",
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda check: check["n_pings"],
     ),
