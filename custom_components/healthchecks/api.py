@@ -1,5 +1,5 @@
 from typing import Literal, NotRequired, Union, assert_never
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunsplit
 
 import aiohttp
 import async_timeout
@@ -150,4 +150,14 @@ def check_id(check: Check) -> str:
 
 
 def check_uuid(check: BaseReadWriteCheck) -> str:
-    return check["ping_url"].split("/")[-1]
+    uuid = check["ping_url"].split("/")[-1]
+    assert len(uuid) == 36
+    return uuid
+
+
+def check_details_url(check: BaseReadWriteCheck) -> str:
+    uri_components = urlparse(check["update_url"])
+    uuid = uri_components.path.split("/")[-1]
+    assert len(uuid) == 36
+    uri_components.path = f"/checks/{uuid}/details/"
+    return urlunsplit(uri_components)

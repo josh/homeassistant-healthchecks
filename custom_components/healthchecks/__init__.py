@@ -8,7 +8,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import Check, check_id, check_uuid
+from .api import Check, check_details_url, check_id
 from .const import DOMAIN
 from .coordinator import HealthchecksDataUpdateCoordinator
 
@@ -63,9 +63,8 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         check = self.coordinator.data[self._id]
 
         configuration_url: str | None = None
-        if "ping_url" in check:
-            uuid = check_uuid(check)
-            configuration_url = f"https://healthchecks.io/checks/{uuid}/details/"
+        if "update_url" in check:
+            configuration_url = check_details_url(check)
 
         return DeviceInfo(
             configuration_url=configuration_url,
