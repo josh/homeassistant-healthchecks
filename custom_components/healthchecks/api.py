@@ -82,6 +82,28 @@ class UnauthorizedError(Exception):
     "The API key is either missing or invalid."
 
 
+async def check_api_key(
+    session: aiohttp.ClientSession,
+    api_key: str,
+    api_url: str = API_URL,
+) -> bool:
+    async with async_timeout.timeout(10):
+        try:
+            url = urljoin(api_url, "/api/v3/checks/")
+            headers = {"X-Api-Key": api_key}
+            response = await session.request(
+                method="GET",
+                url=url,
+                headers=headers,
+            )
+            response.raise_for_status()
+        except aiohttp.ClientResponseError as e:
+            if response.status == 401:
+                raise UnauthorizedError() from e
+            else:
+                raise e
+
+
 async def list_checks(
     session: aiohttp.ClientSession,
     api_key: str,

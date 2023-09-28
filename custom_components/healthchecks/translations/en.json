@@ -6,6 +6,7 @@
         "data": {
           "name": "Project Name",
           "api_key": "API Key",
+          "api_url": "API URL",
           "slug": "Slug",
           "tag": "Tag"
         }
@@ -19,26 +20,26 @@
   },
   "entity": {
     "sensor": {
+      "grace": {
+        "name": "Grace"
+      },
+      "last_duration": {
+        "name": "Last duration"
+      },
+      "last_ping": {
+        "name": "Last ping"
+      },
+      "n_pings": {
+        "name": "Ping count"
+      },
+      "next_ping": {
+        "name": "Next ping"
+      },
       "status": {
         "name": "Status"
       },
       "timeout": {
         "name": "Timeout"
-      },
-      "grace": {
-        "name": "Grace"
-      },
-      "n_pings": {
-        "name": "Ping count"
-      },
-      "last_ping": {
-        "name": "Last ping"
-      },
-      "next_ping": {
-        "name": "Next ping"
-      },
-      "last_duration": {
-        "name": "Last duration"
       }
     }
   }

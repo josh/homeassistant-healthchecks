@@ -10,6 +10,7 @@ DOMAIN: Final = "healthchecks"
 LOGGER = logging.getLogger(__package__)
 SCAN_INTERVAL = timedelta(minutes=1)
 
+CONF_API_URL: Final = "api_url"
 CONF_NAME: Final = "name"
 CONF_TAG: Final = "tag"
 CONF_SLUG: Final = "slug"

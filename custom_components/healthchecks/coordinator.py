@@ -9,8 +9,8 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .api import Check, UnauthorizedError, check_id, list_checks
-from .const import CONF_SLUG, CONF_TAG, DOMAIN, LOGGER, SCAN_INTERVAL
+from .api import API_URL, Check, UnauthorizedError, check_id, list_checks
+from .const import CONF_API_URL, CONF_SLUG, CONF_TAG, DOMAIN, LOGGER, SCAN_INTERVAL
 
 
 class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]]):
@@ -33,6 +33,7 @@ class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]])
         try:
             checks = await list_checks(
                 session=self.session,
+                api_url=self.config_entry.data.get(CONF_API_URL, API_URL),
                 api_key=self.config_entry.data[CONF_API_KEY],
                 slug=self.config_entry.data.get(CONF_SLUG),
                 tag=self.config_entry.data.get(CONF_TAG),
