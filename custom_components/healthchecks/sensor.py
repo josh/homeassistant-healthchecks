@@ -78,7 +78,7 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         translation_key="timeout",
         entity_category=EntityCategory.DIAGNOSTIC,
         native_unit_of_measurement=UnitOfTime.SECONDS,
-        value_fn=lambda check: check.get("timeout", 0),
+        value_fn=lambda check: check.get("timeout"),
     ),
     HealthchecksSensorEntityDescription(
         key="grace",
@@ -108,6 +108,13 @@ SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda check: _parse_timestamp(check["next_ping"]),
+    ),
+    HealthchecksSensorEntityDescription(
+        key="last_duration",
+        translation_key="last_duration",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        value_fn=lambda check: check.get("last_duration"),
     ),
 )
 
