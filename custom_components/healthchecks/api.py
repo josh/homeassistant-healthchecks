@@ -165,3 +165,54 @@ def check_details_url(check: BaseReadWriteCheck) -> str:
     path = f"/checks/{uuid}/details/"
 
     return urlunsplit((scheme, netloc, path, "", ""))
+
+
+async def pause_check(
+    session: aiohttp.ClientSession,
+    check: ReadWriteCheck,
+    api_key: str,
+) -> None:
+    async with async_timeout.timeout(10):
+        url = check["pause_url"]
+        headers = {"X-Api-Key": api_key}
+
+        response = await session.request(
+            method="POST",
+            url=url,
+            headers=headers,
+        )
+
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientResponseError as e:
+            if response.status == 401 or response.status == 403:
+                raise UnauthorizedError() from e
+            else:
+                raise e
+
+
+async def resume_check(
+    session: aiohttp.ClientSession,
+    check: ReadWriteCheck,
+    api_key: str,
+) -> None:
+    async with async_timeout.timeout(10):
+        url = check["resume_url"]
+        headers = {"X-Api-Key": api_key}
+
+        response = await session.request(
+            method="POST",
+            url=url,
+            headers=headers,
+        )
+
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientResponseError as e:
+            if response.status == 401 or response.status == 403:
+                raise UnauthorizedError() from e
+            elif response.status == 409:
+                # Ignore conflict errors
+                return
+            else:
+                raise e

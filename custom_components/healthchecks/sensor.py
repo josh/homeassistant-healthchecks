@@ -54,7 +54,7 @@ class HealthchecksSensorEntityDescription(
 
 
 class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
-    """Defines a Tailscale sensor."""
+    """Defines a Healthchecks.io sensor."""
 
     entity_description: HealthchecksSensorEntityDescription
 

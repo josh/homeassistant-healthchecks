@@ -8,7 +8,14 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .api import Check, UnauthorizedError, check_id, list_checks
+from .api import (
+    Check,
+    UnauthorizedError,
+    check_id,
+    list_checks,
+    pause_check,
+    resume_check,
+)
 from .config_flow import ConfigEntityData
 from .const import DOMAIN, LOGGER, SCAN_INTERVAL
 
@@ -42,3 +49,27 @@ class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]])
             return {check_id(c): c for c in checks}
         except UnauthorizedError:
             raise ConfigEntryAuthFailed()
+
+    async def pause_check(self, check: Check) -> None:
+        if "pause_url" not in check:
+            raise ConfigEntryAuthFailed()
+
+        data: ConfigEntityData = self.config_entry.data
+        await pause_check(
+            session=self.session,
+            check=check,
+            api_key=data["api_key"],
+        )
+        await self.async_refresh()
+
+    async def resume_check(self, check: Check) -> None:
+        if "resume_url" not in check:
+            raise ConfigEntryAuthFailed()
+
+        data: ConfigEntityData = self.config_entry.data
+        await resume_check(
+            session=self.session,
+            check=check,
+            api_key=data["api_key"],
+        )
+        await self.async_refresh()

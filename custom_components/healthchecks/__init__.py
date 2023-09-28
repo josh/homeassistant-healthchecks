@@ -14,7 +14,8 @@ from .coordinator import HealthchecksDataUpdateCoordinator
 
 PLATFORMS = [
     # Platform.BINARY_SENSOR,
-    Platform.SENSOR
+    Platform.SENSOR,
+    Platform.SWITCH,
 ]
 
 

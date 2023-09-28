@@ -41,6 +41,11 @@
       "timeout": {
         "name": "Timeout"
       }
+    },
+    "switch": {
+      "paused": {
+        "name": "Paused"
+      }
     }
   }
 }
