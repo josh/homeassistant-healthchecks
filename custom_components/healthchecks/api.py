@@ -5,9 +5,6 @@ import aiohttp
 import async_timeout
 from typing_extensions import TypedDict
 
-API_URL = "https://healthchecks.io"
-
-
 Status = Literal["new", "up", "grace", "down", "paused"]
 STATUSES: list[Status] = {
     "new",
@@ -84,8 +81,8 @@ class UnauthorizedError(Exception):
 
 async def check_api_key(
     session: aiohttp.ClientSession,
+    api_url: str,
     api_key: str,
-    api_url: str = API_URL,
 ) -> bool:
     async with async_timeout.timeout(10):
         try:
@@ -106,8 +103,8 @@ async def check_api_key(
 
 async def list_checks(
     session: aiohttp.ClientSession,
+    api_url: str,
     api_key: str,
-    api_url: str = API_URL,
     slug: str | None = None,
     tag: str | None = None,
 ) -> list[Check]:

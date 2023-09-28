@@ -7,6 +7,8 @@ from typing import Final
 
 DOMAIN: Final = "healthchecks"
 
+DEFAULT_API_URL = "https://healthchecks.io"
+
 LOGGER = logging.getLogger(__package__)
 SCAN_INTERVAL = timedelta(minutes=1)
 

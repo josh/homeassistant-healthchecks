@@ -10,14 +10,14 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import API_URL, UnauthorizedError, check_api_key
-from .const import CONF_API_URL, CONF_NAME, CONF_SLUG, CONF_TAG, DOMAIN
+from .api import UnauthorizedError, check_api_key
+from .const import CONF_API_URL, CONF_NAME, CONF_SLUG, CONF_TAG, DEFAULT_API_URL, DOMAIN
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME, default="Healthchecks.io"): cv.string,
         vol.Required(CONF_API_KEY): cv.string,
-        vol.Optional(CONF_API_URL, default=API_URL): cv.string,
+        vol.Optional(CONF_API_URL, default=DEFAULT_API_URL): cv.string,
         vol.Optional(CONF_SLUG): cv.string,
         vol.Optional(CONF_TAG): cv.string,
     }
@@ -46,7 +46,7 @@ class HealthchecksConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 data: ConfigEntityData = {
-                    "api_url": user_input.get(CONF_API_URL, API_URL),
+                    "api_url": user_input.get(CONF_API_URL, DEFAULT_API_URL),
                     "api_key": user_input[CONF_API_KEY],
                 }
 
