@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HealthchecksEntity
@@ -28,6 +29,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up a Healthchecks.io sensors based on a config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service("ping", {}, "ping")
+
     async_add_entities(
         HealthchecksSensorEntity(
             coordinator=coordinator,
@@ -61,7 +66,12 @@ class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
     @property
     def native_value(self) -> datetime | str | None:
         """Return the state of the sensor."""
-        return self.entity_description.value_fn(self.coordinator.data[self._id])
+        check: Check = self.coordinator.data[self._id]
+        return self.entity_description.value_fn(check)
+
+    async def ping(self):
+        check: Check = self.coordinator.data[self._id]
+        await self.coordinator.ping_check(check)
 
 
 SENSORS: tuple[HealthchecksSensorEntityDescription, ...] = (
