@@ -9,7 +9,7 @@ from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .api import Check, check_details_url, check_id
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 from .coordinator import HealthchecksDataUpdateCoordinator
 
 PLATFORMS = [
@@ -59,9 +59,12 @@ class HealthchecksEntity(CoordinatorEntity[HealthchecksDataUpdateCoordinator]):
         self._attr_unique_id = f"{self._id}_{description.key}"
 
     @property
-    def device_info(self) -> DeviceInfo:
+    def device_info(self) -> DeviceInfo | None:
         """Return the device info."""
-        check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load device_info for %s", self._id)
+            return None
 
         configuration_url: str | None = None
         if "update_url" in check:

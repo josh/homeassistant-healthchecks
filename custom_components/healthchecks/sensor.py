@@ -19,7 +19,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HealthchecksEntity
 from .api import STATUSES, Check
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 
 
 async def async_setup_entry(
@@ -66,11 +66,17 @@ class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
     @property
     def native_value(self) -> datetime | int | str | None:
         """Return the state of the sensor."""
-        check: Check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load sensor native_value for %s", self._id)
+            return None
         return self.entity_description.value_fn(check)
 
     async def ping(self):
-        check: Check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load sensor to ping for %s", self._id)
+            return
         await self.coordinator.ping_check(check)
 
 

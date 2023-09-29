@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import HealthchecksEntity
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 
 
 async def async_setup_entry(
@@ -53,15 +53,24 @@ class HealthchecksPauseSwitchEntity(HealthchecksEntity, SwitchEntity):
     @property
     def is_on(self) -> bool | None:
         """Return the state of the switch."""
-        check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load switch for %s", self._id)
+            return None
         return check["status"] == "paused"
 
     async def async_turn_on(self, **kwargs) -> None:
         """Pause check"""
-        check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load switch for %s", self._id)
+            return
         await self.coordinator.pause_check(check)
 
     async def async_turn_off(self, **kwargs) -> None:
         """Resume check"""
-        check = self.coordinator.data[self._id]
+        check = self.coordinator.data.get(self._id)
+        if not check:
+            LOGGER.warning("Couldn't load switch for %s", self._id)
+            return
         await self.coordinator.resume_check(check)
