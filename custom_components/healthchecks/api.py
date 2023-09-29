@@ -6,13 +6,13 @@ import async_timeout
 from typing_extensions import TypedDict
 
 Status = Literal["new", "up", "grace", "down", "paused"]
-STATUSES: list[Status] = {
+STATUSES: list[Status] = [
     "new",
     "up",
     "grace",
     "down",
     "paused",
-}
+]
 
 
 class BaseCheck(TypedDict):
