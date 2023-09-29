@@ -47,5 +47,11 @@
         "name": "Paused"
       }
     }
+  },
+  "service": {
+    "ping": {
+      "name": "Ping",
+      "description": "Ping healthcheck"
+    }
   }
 }
