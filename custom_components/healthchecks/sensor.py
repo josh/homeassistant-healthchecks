@@ -48,7 +48,7 @@ async def async_setup_entry(
 class HealthchecksSensorEntityDescriptionMixin:
     """Mixin for required keys."""
 
-    value_fn: Callable[[Check], datetime | str | None]
+    value_fn: Callable[[Check], datetime | int | str | None]
 
 
 @dataclass
@@ -64,7 +64,7 @@ class HealthchecksSensorEntity(HealthchecksEntity, SensorEntity):
     entity_description: HealthchecksSensorEntityDescription
 
     @property
-    def native_value(self) -> datetime | str | None:
+    def native_value(self) -> datetime | int | str | None:
         """Return the state of the sensor."""
         check: Check = self.coordinator.data[self._id]
         return self.entity_description.value_fn(check)
