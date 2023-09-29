@@ -94,6 +94,7 @@ async def check_api_key(
                 headers=headers,
             )
             response.raise_for_status()
+            return True
         except aiohttp.ClientResponseError as e:
             if response.status == 401:
                 raise UnauthorizedError() from e
