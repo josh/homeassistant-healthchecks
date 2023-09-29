@@ -1,0 +1,6 @@
+ping:
+  target:
+    device:
+      integration: healthchecks
+    entity:
+      integration: healthchecks

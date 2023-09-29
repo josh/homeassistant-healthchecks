@@ -213,3 +213,16 @@ async def resume_check(
                 return
             else:
                 raise e
+
+
+async def ping_check(
+    session: aiohttp.ClientSession,
+    check: ReadWriteCheck,
+) -> None:
+    async with async_timeout.timeout(10):
+        response = await session.request(
+            method="GET",
+            url=check["ping_url"],
+        )
+        response.raise_for_status()
+        assert response.status == 200

@@ -14,6 +14,7 @@ from .api import (
     check_id,
     list_checks,
     pause_check,
+    ping_check,
     resume_check,
 )
 from .config_flow import ConfigEntityData
@@ -71,5 +72,15 @@ class HealthchecksDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Check]])
             session=self.session,
             check=check,
             api_key=data["api_key"],
+        )
+        await self.async_refresh()
+
+    async def ping_check(self, check: Check) -> None:
+        if "ping_url" not in check:
+            raise ConfigEntryAuthFailed()
+
+        await ping_check(
+            session=self.session,
+            check=check,
         )
         await self.async_refresh()
