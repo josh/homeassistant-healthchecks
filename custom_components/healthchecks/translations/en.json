@@ -48,7 +48,7 @@
       }
     }
   },
-  "service": {
+  "services": {
     "ping": {
       "name": "Ping",
       "description": "Ping healthcheck"
