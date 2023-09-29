@@ -85,21 +85,17 @@ async def check_api_key(
     api_key: str,
 ) -> bool:
     async with async_timeout.timeout(10):
-        try:
-            url = urljoin(api_url, "/api/v3/checks/")
-            headers = {"X-Api-Key": api_key}
-            response = await session.request(
-                method="GET",
-                url=url,
-                headers=headers,
-            )
-            response.raise_for_status()
-            return True
-        except aiohttp.ClientResponseError as e:
-            if response.status == 401:
-                raise UnauthorizedError() from e
-            else:
-                raise e
+        url = urljoin(api_url, "/api/v3/checks/")
+        headers = {"X-Api-Key": api_key}
+        response = await session.request(
+            method="GET",
+            url=url,
+            headers=headers,
+        )
+        if response.status == 401:
+            raise UnauthorizedError()
+        response.raise_for_status()
+        return True
 
 
 async def list_checks(
