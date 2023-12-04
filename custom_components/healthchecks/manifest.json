@@ -4,6 +4,7 @@
   "codeowners": ["@josh"],
   "config_flow": true,
   "documentation": "https://github.com/josh/homeassistant-healthchecks",
+  "issue_tracker": "https://github.com/josh/homeassistant-healthchecks/issues",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
   "version": "0.1.0"
